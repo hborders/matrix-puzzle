@@ -1,0 +1,136 @@
+<html>
+<head>
+<style type="text/css">
+table {
+  text-align: right;
+  font-size: 10px;
+}
+</style>
+</head>
+<body>
+<script type="text/javascript">
+function buildTable() {
+  var tableHolder = document.getElementById('tableHolder');
+  var oldTableHolderDisplay = tableHolder.style.display;
+  tableHolder.style.display = "none";
+  var table = document.getElementById('table');
+  if (table) {
+    tableHolder.removeChild(table);
+  }
+  table = document.createElement("table");
+  table.id = "table";
+  table.border = "1";
+  tableHolder.appendChild(table);
+  
+  var size = document.getElementById('size').value;
+  var max = 0;
+  var maxRow = 0;
+  var maxCol = 0;
+  for (var row = 0; row < size; row++) {
+    var tr = document.createElement("tr");
+    table.appendChild(tr);
+    var rowValues = new Array();
+    for (var col = 0; col < size; col++) {
+      var td = document.createElement("td");
+      tr.appendChild(td);
+
+      var values = rowValues.slice(0);
+      for (var searchRow = 0; searchRow < row; searchRow++) {
+        values.push(parseInt(table.childNodes[searchRow].childNodes[col].textContent));
+      } 
+      
+      values.sort(function(a,b) { return a - b; });
+      var min = 0;
+      values.forEach(function(value) {
+        if (value <= min) {
+          min++;
+        }
+      });
+
+
+      var workingRow = row;
+      var workingCol = col;
+
+      console.log("workingRow: " + workingRow + ", workingCol: " + workingCol);  
+
+      var value = 0;
+      while (workingRow != 0) {
+        if (workingRow < 0) {
+          console.error("major bad. row: " + row + ", col: " + col);
+          break;
+        }
+        if (workingCol < workingRow) {
+          var temp = workingRow;
+          workingRow = workingCol;
+          workingCol = temp;
+          continue;
+        } else if (workingCol == workingRow) {
+          workingCol = workingRow = 0;
+          break;
+        }
+        var log2WorkingCol = Math.log(workingCol) / Math.log(2);
+        var closest2LessThanWorkingCol = Math.pow(2, Math.floor(log2WorkingCol));
+
+        console.log("workingRow: " + workingRow + ", workingCol: " + workingCol + ", closest2LessThanWorkingCol: " + closest2LessThanWorkingCol);
+ 
+       if (workingRow < closest2LessThanWorkingCol) {
+          value += closest2LessThanWorkingCol;
+          workingCol -= closest2LessThanWorkingCol;
+        } else {
+          workingRow -= closest2LessThanWorkingCol;
+          workingCol -= closest2LessThanWorkingCol;
+        }
+      }
+
+      value += workingCol;
+
+      if (value != min) {
+        console.error("row: " + row + ", col: " + col + ", min: " + min + ", value: " + value);
+      }
+
+      
+
+      td.textContent = min;
+      rowValues.push(min);
+      if (min > max) {
+        max = min;
+        maxRow = row;
+        maxCol = col;
+      }
+    }
+  }
+  tableHolder.style.display = oldTableHolderDisplay;
+  var width = table.childNodes[maxRow].childNodes[maxCol].offsetWidth;
+  tableHolder.style.display = "none";
+  var tds = document.getElementsByTagName('td');
+  for (var i = 0; i < tds.length; i++) {
+    var td = tds[i];
+    td.width = width + "px";
+    td.height = width + "px";
+  };
+  tableHolder.style.display = oldTableHolderDisplay;
+}
+function color() {
+  var tds = document.getElementsByTagName('td');
+  var expression = document.getElementById('expression').value;
+  var functionBody = "return " + expression + ";";
+  var predicate = new Function("value", functionBody);
+  var color = document.getElementById('color').value;
+  for (var i = 0; i < tds.length; i++) {
+    var td = tds[i];
+    var value = parseInt(td.textContent);
+    if (predicate(value)) {
+      td.style.backgroundColor = color;
+    }
+  };
+}
+</script>
+<div>
+  size: <input type="text" id="size" /> <input type="button" onClick="buildTable();" value="resize" />
+</div>
+<div>
+  color: <input type="text" id="color" /> expression: <input type="text" id="expression" /> <input type="button" onClick="color();" value="color" />
+</div>
+<div id="tableHolder" style="font-family:'Courier New';"></div>
+</body>
+</html>
